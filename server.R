@@ -396,9 +396,9 @@ function(input, output, session) {
     p_ab_38<-ggplot(filtered_data_38(), aes(x = Sample, y = Score, fill = BaseName)) +
       geom_bar(stat = "identity") +
       labs(
-        title = "Scores par pathway d'IRE1 38 au sein des échantillons TCGA",
+        title = "Scores d'abondance par pathway d'IRE1 38 au sein des échantillons TCGA",
         x = "Échantillon",
-        y = "Score cumulé"
+        y = "Score d'abondance"
       ) +
       theme_minimal() +
       theme(axis.text.x = element_blank())
@@ -442,9 +442,9 @@ function(input, output, session) {
   ggplot(score_grouped_XBP1_RIDD_pur, aes(x = Sample, y = Score, fill = BaseName)) +
     geom_bar(stat = "identity") +
     labs(
-      title = "Scores cumulés par pathway",
+      title = "Scores d'abondance par pathway",
       x = "Échantillon",
-      y = "Score cumulé"
+      y = "Score d'abondance"
     ) +
     theme_minimal() +
     theme(axis.text.x = element_blank())
@@ -459,9 +459,9 @@ function(input, output, session) {
     p_ab_pur<-ggplot(filtered_data_pur(), aes(x = Sample, y = Score, fill = BaseName)) +
       geom_bar(stat = "identity") +
       labs(
-        title = "Scores pour XBP1s pur et RIDD pur au sein des échantillons TCGA",
+        title = "Scores d'abondance pour XBP1s pur et RIDD pur au sein des échantillons TCGA",
         x = "Échantillon",
-        y = "Score cumulé"
+        y = "Score d'abondance"
       ) +
       theme_minimal() +
       theme(axis.text.x = element_blank())
@@ -488,34 +488,54 @@ function(input, output, session) {
     p
   })
   
-  output$k_ire1 <- renderPlot({
-    numeric_data_H <- score_XBP1_RIDD_pur_impur[, -1]
-    data_scaled_H <- scale(numeric_data_H)
-    
-    # Déterminer le nombre optimal de clusters en utilisant l'indice de silhouette
-    fviz_nbclust(data_scaled_H, kmeans, method = "silhouette")
-    I.intra = sapply(1:20,FUN=function(k) kmeans(numeric_data,centers=k,nstart=50)$tot.withinss)
-    plot(I.intra,type="b",xlab="nb groupes",ylab="inertie intra")
-  })
+  numeric_data_H <- score_XBP1_RIDD_pur_impur[, -1]
+  data_scaled_H <- scale(numeric_data_H)
+  
+  # Déterminer le nombre optimal de clusters en utilisant l'indice de silhouette
+  silhouette_info <- fviz_nbclust(data_scaled_H, kmeans, method = "silhouette")
+  nb_groupe_silhouette <- which.max(silhouette_info$data$y)
+  I.intra = sapply(1:20,FUN=function(k) kmeans(numeric_data,centers=k,nstart=50)$tot.withinss)
+  
+  diff_I.intra <- diff(I.intra)
+  diff_ratio <- diff_I.intra / I.intra[1:(length(I.intra) - 1)]
+  nb_groupe_elbow <- which.max(diff_ratio) + 1
+  plot(I.intra,type="b",xlab="nb groupes",ylab="inertie intra") 
+  res_nbclust <- NbClust(data_scaled_H, distance = "euclidean", 
+                         min.nc = 2, max.nc = 15, method = "kmeans", index = "all")
+  
+  # Le nombre optimal de clusters selon la majorité des indices
+  nb_groupe <- res_nbclust$Best.nc[1]
+  
+  
+  output$k_XR <- renderText({nb_groupe})
   
   output$kmeans_ire1 <-renderPlot({
     numeric_data_pur <- score_XBP1_RIDD_pur_impur[, -1]  # Exclude the first column (Sample)
     
     set.seed(123)  # Pour la reproductibilité
-    km <- kmeans(numeric_data_pur, centers = 2, nstart = 50)
+    km <- kmeans(numeric_data_pur, centers = nb_groupe, nstart = 50)
     
     clusplot(numeric_data_pur,km$cluster,color = TRUE, shade = TRUE, 
-             labels = 2, lines = 0, main = "Clusplot XBP1s RIDD kmeans")
+             labels = nb_groupe, lines = 0, main = "Clusplot XBP1s RIDD kmeans")
   })
+  nb_groupe_XR_CAH <- NbClust(data_scaled_H, 
+                              distance = "euclidean", 
+                              min.nc = 2, 
+                              max.nc = 10, 
+                              method = "ward.D2",   # ou "complete", "average", etc.
+                              index = "all") 
   
+  output$k_XR_CAH <- renderText({
+    nb_groupe_XR_CAH$Best.nc[1]
+  })
   output$cah_SEA <- renderPlot({
     d <- dist(score_grouped_XBP1_RIDD_wide[, -1], method = "euclidean")
     h <- hclust(d,method = "complete")
     plot(h, main = "Dendrogramme de la CAH XBP1 et RIDD")
-    rect.hclust(h, k = 2, border = 'darkorchid')
-    groupes_cah <- cutree(h, k = 2)
+    rect.hclust(h, k = nb_groupe_XR_CAH$Best.nc[1], border = 'darkorchid')
+    groupes_cah <- cutree(h, k = nb_groupe_XR_CAH$Best.nc[1])
     clusplot(score_grouped_XBP1_RIDD_wide[, -1], groupes_cah, color = TRUE, shade = TRUE, 
-             labels = 2, lines = 0, main = "Clusplot XBP1s RIDD CAH")
+             labels = nb_groupe_XR_CAH$Best.nc[1], lines = 0, main = "Clusplot XBP1s RIDD CAH")
   })
 ########################################################TAB CANCER SEA####################################################################
   output$exemple_GSEA_CS <- renderUI({
@@ -689,9 +709,9 @@ function(input, output, session) {
     p <- ggplot(data, aes(x = Sample, y = Score, fill = BaseName)) +
       geom_bar(stat = "identity") +
       labs(
-        title = "Scores cumulés par pathway",
+        title = "Scores d'abondance par pathway",
         x = "Échantillon",
-        y = "Score cumulé"
+        y = "Score d'abondance"
       ) +
       theme_minimal() +
       theme(axis.text.x = element_blank())
@@ -707,34 +727,51 @@ function(input, output, session) {
     
   output$var_SEA <- renderPlot({fviz_pca_var(acp)})  # variables
   
-  output$k_SEA <- renderPlot({
-    numeric_data <- score_grouped_CancerSEA_wide[, -1]
-    data_scaled <- scale(numeric_data)
-    
-    # Déterminer le nombre optimal de clusters en utilisant l'indice de silhouette
-    fviz_nbclust(data_scaled, kmeans, method = "silhouette")
-    I.intra = sapply(1:20,FUN=function(k) kmeans(numeric_data,centers=k,nstart=50)$tot.withinss)
-    plot(I.intra,type="b",xlab="nb groupes",ylab="inertie intra")
+  numeric_data_SEA <- score_grouped_CancerSEA_wide[, -1]
+  data_scaled_SEA <- scale(numeric_data)
+  
+  # Déterminer le nombre optimal de clusters en utilisant l'indice de silhouette
+  res_nbclust_SEA <- NbClust(numeric_data_SEA, distance = "euclidean", 
+                         min.nc = 2, max.nc = 15, method = "kmeans", index = "silhouette")
+  
+  # Le nombre optimal de clusters selon la majorité des indices
+  nb_groupe_SEA <- res_nbclust_SEA$Best.nc[1]
+  
+  output$k_SEA <- renderText({
+    nb_groupe_SEA
   })
   
   output$kmeans_SEA <- renderPlot({
     numeric_data <- score_grouped_CancerSEA_wide[, -1]  # Exclude the first column (Sample)
     
     set.seed(123)  # Pour la reproductibilité
-    km <- kmeans(numeric_data, centers = 2, nstart = 50)
+    km <- kmeans(numeric_data_SEA, centers = nb_groupe_SEA, nstart = 50)
     print(km)
-    clusplot(numeric_data,km$cluster,color = TRUE, shade = TRUE, 
-             labels = 2, lines = 0, main = "Clusplot pathways de CancerSEA kmeans")
+    clusplot(numeric_data_SEA,km$cluster,color = TRUE, shade = TRUE, 
+             labels = nb_groupe_SEA, lines = 0, main = "Clusplot pathways de CancerSEA kmeans")
   })
   
+  k_CAH_SEA <- NbClust(data_scaled_SEA, 
+                       distance = "euclidean", 
+                       min.nc = 2, 
+                       max.nc = 10, 
+                       method = "ward.D2",   # ou "complete", "average", etc.
+                       index = "silhouette") 
+  
+  nb_groupe_SEA_CAH <- k_CAH_SEA$Best.nc[1] 
+  
+  output$k_SEA_CAH <- renderText({
+    nb_groupe_SEA_CAH
+  })
+    
   output$cah_ire1 <- renderPlot({
     d <- dist(score_grouped_CancerSEA_wide[, -1], method = "euclidean")
     h <- hclust(d,method = "complete")
     plot(h, main = "Dendrogramme de la CAH de CancerSEA")
-    rect.hclust(h, k = 2, border = 'darkorchid')
-    groupes_cah <- cutree(h, k = 2)
+    rect.hclust(h, k = nb_groupe_SEA_CAH, border = 'darkorchid')
+    groupes_cah <- cutree(h, k = nb_groupe_SEA_CAH)
     clusplot(score_grouped_CancerSEA_wide[, -1], groupes_cah, color = TRUE, shade = TRUE, 
-             labels = 2, lines = 0, main = "Clusplot de CancerSEA CAH")
+             labels = nb_groupe_SEA_CAH, lines = 0, main = "Clusplot de CancerSEA CAH")
   })
   
   
@@ -892,9 +929,9 @@ function(input, output, session) {
     p <- ggplot(filtered_data_Hallmarks(), aes(x = Sample, y = Score, fill = BaseName)) +
       geom_bar(stat = "identity") +
       labs(
-        title = "Scores cumulés par pathway",
+        title = "Scores d'abondance par pathway",
         x = "Échantillon",
-        y = "Score cumulé"
+        y = "Score d'abondance"
       ) +
       theme_minimal() +
       theme(axis.text.x = element_blank())
@@ -910,34 +947,53 @@ function(input, output, session) {
   
   output$var_Hallmarks <- renderPlot({fviz_pca_var(acp)})
   
-  output$k_Hallmarks <- renderPlot({
-    numeric_data_H <- score_grouped_Hallmark_wide[, -1]
-    data_scaled_H <- scale(numeric_data_H)
-    
-    # Déterminer le nombre optimal de clusters en utilisant l'indice de silhouette
-    fviz_nbclust(data_scaled_H, kmeans, method = "silhouette")
-    I.intra = sapply(1:20,FUN=function(k) kmeans(numeric_data,centers=k,nstart=50)$tot.withinss)
-    plot(I.intra,type="b",xlab="nb groupes",ylab="inertie intra")
-  })
+  numeric_data_H <- score_grouped_Hallmark_wide[, -1]
+  data_scaled_H <- scale(numeric_data_H)
+  
+  # Déterminer le nombre optimal de clusters en utilisant l'indice de silhouette
+  fviz_nbclust(data_scaled_H, kmeans, method = "silhouette")
+  I.intra = sapply(1:20,FUN=function(k) kmeans(numeric_data,centers=k,nstart=50)$tot.withinss)
+  plot(I.intra,type="b",xlab="nb groupes",ylab="inertie intra")
+  
+  numeric_data_H <- score_grouped_Hallmark_wide[, -1]
+  data_scaled_H <- scale(numeric_data_H)
+  
+  res_nbclust_H <- NbClust(data_scaled_H, distance = "euclidean", 
+                           min.nc = 2, max.nc = 20, method = "kmeans", index = "silhouette")
+  
+  # Le nombre optimal de clusters selon la majorité des indices
+  nb_groupe_H <- res_nbclust_H$Best.nc[1]
+  output$k_H <- renderText({nb_groupe_H})
   
   output$kmeans_Hallmarks <- renderPlot({
     numeric_data_H <- score_grouped_Hallmark_wide[, -1]  # Exclude the first column (Sample)
     
     set.seed(123)  # Pour la reproductibilité
-    km <- kmeans(numeric_data_H, centers = 2, nstart = 50)
+    km <- kmeans(numeric_data_H, centers = nb_groupe_H, nstart = 50)
     print(km)
     clusplot(numeric_data_H,km$cluster,color = TRUE, shade = TRUE, 
-             labels = 2, lines = 0, main = "Clusplot pathways kmeans")
+             labels = nb_groupe_H, lines = 0, main = "Clusplot pathways kmeans")
+  })
+  
+  nb_groupe_H_CAH <- NbClust(data_scaled_H, 
+                              distance = "euclidean", 
+                              min.nc = 2, 
+                              max.nc = 20, 
+                              method = "ward.D2",   
+                              index = "silhouette") 
+  
+  output$k_H_CAH <- renderText({
+    nb_groupe_H_CAH$Best.nc[1]
   })
   
   output$cah_Hallmarks <- renderPlot({
     d <- dist(score_grouped_Hallmark_wide[, -1], method = "euclidean")
     h <- hclust(d,method = "complete")
     plot(h, main = "Dendrogramme de la CAH des Hallmark")
-    rect.hclust(h, k = 2, border = 'darkorchid')
-    groupes_cah <- cutree(h, k = 2)
+    rect.hclust(h, k = nb_groupe_H_CAH$Best.nc[1], border = 'darkorchid')
+    groupes_cah <- cutree(h, k = nb_groupe_H_CAH$Best.nc[1])
     clusplot(score_grouped_Hallmark_wide[, -1], groupes_cah, color = TRUE, shade = TRUE, 
-             labels = 2, lines = 0, main = "Clusplot de Hallmark CAH")
+             labels = nb_groupe_H_CAH$Best.nc[1], lines = 0, main = "Clusplot de Hallmark CAH")
   })
   
 ########################################################TAB QUALITE SIGNATURE####################################################################
@@ -1050,15 +1106,24 @@ function(input, output, session) {
   df_active_38$Group <- "Groupe IRE1 38"
   df_active_pur$Group <- "Groupe Pur"
   combined_df <- rbind(df_active_38, df_active_pur)
+  combined_df$Group <- factor(combined_df$Group, 
+                              levels = c("Groupe IRE1 38", "Groupe Pur"),
+                              labels = c("XBP1s 19 et RIDD 19", "XBP1s pur et RIDD pur"))
   
   # Créer le boxplot
   output$comparaison_activite <- renderPlot({
     ggplot(combined_df, aes(x = Group, y = IRE1_actif, fill = Group)) +
-    geom_boxplot() +
-    labs(title = "Comparaison des scores IRE1_actif entre les deux groupes",
-         x = "Groupe",
-         y = "Score IRE1_actif") +
-    theme_minimal()
+      geom_boxplot() +
+      labs(
+        title = "Comparaison des scores IRE1_actif entre les deux types de signatures",
+        x = "Type de signature",
+        y = "Score IRE1_actif",
+        fill = "Type de signature"
+      ) +
+      theme_minimal() +
+      theme(
+        legend.position = "right"
+      )
   })
 #################TRUC MATHEO########################
   score_XR_pur <- read.csv(file = "score_grouped_XBP1_RIDD_pur.csv", sep = ",")
@@ -1278,9 +1343,9 @@ function(input, output, session) {
   p_pur_19 <-ggplot(score_grouped_XBP1_RIDD_pur_19 , aes(x = Sample, y = Score, fill = BaseName)) +
     geom_bar(stat = "identity") +
     labs(
-      title = "Scores cumulés par pathway",
+      title = "Scores d'abondance par pathway",
       x = "Échantillon",
-      y = "Score cumulé"
+      y = "Score d'abondance"
     ) +
     theme_minimal() +
     theme(axis.text.x = element_blank())
