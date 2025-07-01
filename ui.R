@@ -65,6 +65,7 @@ ui <-
         background-repeat: no-repeat;
         background-attachment: fixed;
         color: white;
+        font-size: 16px;
       }
       
       .plot-container {
@@ -130,17 +131,26 @@ ui <-
       margin: 5px !important;
       }
       
-      
-      .custom-loader {
-    width: 80px;
-    max-width: 100px;
-    height: auto;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-      }
   
-    
+
+/* If you want to specifically target only cat.gif */
+img[src*='cat.gif'] {
+  width: 400px !important;
+  height: auto !important;
+  max-width: 800px !important;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+    /* If you want to specifically target only math-cat.gif */
+img[src*='math-cat.gif'] {
+  width: 200px !important;
+  height: auto !important;
+  max-width: 800px !important;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
 
     
     "),
@@ -158,7 +168,7 @@ ui <-
              h2("Introduction et contexte"),
              fluidPage(
                
-             p("Le ",strong("glioblastome"), "est la tumeur du cerveau la plus fréquente et agressive. Une des raisons de sa létalité est l'hétérogénéité des types cellulaires qu'elle contient. La tumeur contient donc des cellules différentes que l'on peut mettre dans des 'catégories' différentes selon leur expression transcriptomique, c'est-à-dire l'ensemble des ARN que la cellule produit. Les différents",strong("états cellulaires"),"  du glioblastome se nomment:"),
+             p("Le ",strong("glioblastome"), "est la tumeur du cerveau la plus fréquente et agressive, chez l'homme. Une des raisons de sa résistance au traitement et des récidive est l'hétérogénéité des états cellulaires qu'elle contient. La tumeur contient donc des cellules différentes que l'on peut mettre dans des 'catégories' différentes selon leur expression transcriptomique, c'est-à-dire l'ensemble des ARN que la cellule produit. Les différents",strong("états cellulaires"),"  du glioblastome se nomment:"),
             tags$ul(
               tags$li("AC-like"),
               tags$li("MES-like"),
@@ -166,11 +176,11 @@ ui <-
               tags$li("NPC-like")),
             p("Certains chercheurs pensent aussi avoir trouvé des nouveaux états cellulaires : ODC-like et stem-like."),
             p("A partir du", strong("transcriptome"), "(l'ensemble des ARN produit) d'une cellule, on peut aussi retrouver des ",strong("voies de signalisations"),", qui désignent une suite de réactions chimiques où un groupe de molécule d'une cellule travaille ensemble pour contrôler des fonctions d'une cellule comme l'apoptose (mort programmé de la cellule) ou la division de la cellule par exemple. Deux voies de signalisations qui vont particulièrement nous intéresser sont", strong("XBP1s")," et ",strong("RIDD"),". Ces voies de signalisation sont activées en cas de stress du",strong ("réticulum endoplasmique")," (un organite de la cellule). Le réticulum endoplasmique peut être stressé en cas de cancer, ou d'une carence en nutriment, ou bien même un choc thermique dans ce cas, il active ",strong("IRE1"), "qui est la protéine transmembranaire qui lance ces voies de signalisation. Ainsi, lorsque le réticulum endoplasmique est stressé elle active la voie de signalisation XBP1s qui permet d'augmenter la production de protéine utile dans cette période de stress. Elle peut aussi activer la voie de signalisation RIDD qui pour 'soulager' la cellule stressée va détruire les ARNs afin de réduire la production de protéine et de lui donner moins de travail en période de stress."),
-            p("Ainsi pour mieux comprendre et traiter les glioblastomes, il est important de connaître dans quel 'état' est chaque cellule et quelle voie de signalisation elle active. Cependant, lorsque l'on prélève des échantillons de tumeurs et qu'on récupère leurs transcriptomes, on n'a pas le transcriptome de chaque cellule. Mais on a l'ensemble des transcriptomes des cellules de l'échantillon mélangés, ne formant qu'un seul gros transcriptome."),
+            p("Ainsi pour mieux comprendre et traiter les glioblastomes, il est important de connaître dans quel 'état' est chaque cellule et quelle voie de signalisation elle active. Cependant, lorsque l'on prélève des échantillons de tumeurs et qu'on récupère leurs transcriptomes, on n'a pas le transcriptome de chaque cellule. Mais on a l'ensemble des transcriptomes des cellules de l'échantillon mélangés, ne formant qu'un seul gros transcriptome (transcriptome en bulk)."),
             p("Nous allons donc tenter de", strong("déconvoluer")," dans nos échantillons TCGA (avec une expression génétique pour chaque échantillon), c'est-à-dire retrouver la quantité des différents états cellulaires et voie de signalisation au sein d'un échantillon."),
             p("Un objectif complémentaire de ce projet est de déterminer la qualité des signatures de XBP1s et de RIDD, c'est-à-dire déterminer si la signature représente bien la voie de signalisation. Ici, quand on parle de signature, on parle de l'ensemble des gènes qui sont produit spécifiquement lorsque la voie de signalisation est activé ou lorsque la cellule est dans un de ses états cellulaires. Déterminer si la signature représente bien la voie de signalisation nous permet de mieux interpréter et ou valider/invalider les résultats de la déconvolution."),
             p("Notre objectif principal reste de déterminer la proportion des états cellulaires ainsi que des voies de signalisation et d'étudier ces résultats."),
-            p("Nous allons étudier des voies de signalisations qui sont issues des études ",strong("CancerSEA"), "et" ,strong("Hallmarks"),"."),
+            p("Nous allons étudier des voies de signalisation qui sont issues des études ",strong("CancerSEA"), "et" ,strong("Hallmarks"),"."),
             
             titlePanel("CancerSEA Signatures"),
               
@@ -196,7 +206,7 @@ ui <-
                 withSpinner(type =6, color = "#7F00FF"),
             br(),
             
-            p("Afin de voir l'importance de nos différentes voies de signalisations dans nos échantillons nous allons utiliser une méthode appelée l'ICA qui est une méthode mathématique qui nous permet d'isoler des signaux latents dans un ensemble de signaux mixtes. Nous avons utilisé le package deconica d'Urszula Czerwinska pour faire l'ICA puis nous avons fait une gene set enrichment analysis qui nous a permis ensuite de déterminer un score d'abondance des états cellulaires et des voies de signalisations dans chaque échantillon."),
+            p("Afin de voir l'importance de nos différentes voies de signalisations dans nos échantillons nous allons utiliser une méthode appelée l'ICA qui est une méthode mathématique qui nous permet d'isoler des signaux latents dans un ensemble de signaux mixtes. Nous avons utilisé le package deconica d'Urszula Czerwinska pour faire l'ICA puis nous avons fait une gene set enrichment analysis qui nous a permis ensuite de déterminer un score d'abondance des états cellulaires et des voies de signalisation dans chaque échantillon."),
             p("Puis on va étudier ce que ses scores révèlent chez chaque patient et on va tenter de valider la qualité de nos signatures."),
             ),
     ),
@@ -241,7 +251,7 @@ ui <-
   tabPanel("XBP1 et RIDD",
            
           
-           h2("Déconvolution des voies de signalisations XBP1s et RIDD au sein de nos échantillons TCGA"),
+           h2("Déconvolution des voies de signalisation XBP1s et RIDD au sein de nos échantillons TCGA"),
            
            p("Ici on s'intéresse à deux types de signatures pour XBP1s et RIDD:"),
            
@@ -266,7 +276,8 @@ ui <-
            
            titlePanel("Table de résultats du GSEA pour XBP1s 19 et RIDD 19"),
            
-           withLoader(uiOutput("result_GSEA_IRE1_38"),type = "image",loader =  "cat.gif"),
+           uiOutput("result_GSEA_IRE1_38")%>%
+             withSpinner(type =6, color = "#7F00FF"),
              
            br(),
            
@@ -278,7 +289,7 @@ ui <-
            
            titlePanel("Représentation graphique des résultats de GSEA"),
            
-           plotlyOutput("result_GSEA_IRE1_graph")%>%
+           uiOutput("result_GSEA_IRE1_graph")%>%
              withSpinner(type =6, color = "#7F00FF"),
            br(),
            p("Afin de retrouver dans nos composantes issues de l'ICA les voies de signalisations qui nous intéressent ici. On va tout d'abord résumer l'information de chaque composante en ne prenant que ses 10 gènes les plus exprimés. De plus, on va calculer un score d'abondance pour chaque composante par échantillon (combien de fois on retrouve la composante dans chaque échantillon). Ainsi on va associer grâce a un test GSEA les voies de signalisations aux composantes qui les correspondent le plus et on dit que le score d'abondance de la composante dans l'échantillon correspond à la place de la voie de signalisation correspondante dans l'échantillon."),
@@ -314,6 +325,7 @@ ui <-
            h4("ACP"),
            
            titlePanel("Cercle des variables de l'ACP"),
+           
            plotOutput("acp_ire1")%>%
              withSpinner(type =6, color = "#7F00FF"),
            br(),
@@ -341,7 +353,9 @@ ui <-
            plotOutput("kmeans_ire1")%>%
              withSpinner(type =6, color = "#7F00FF"),
            
-           p("Due à la nature non-déterministe de l'ICA les résultats peuvent être complètement différent d'une initialisation à une autre"),
+           p("Dû à la nature non-déterministe de l'ICA, les résultats peuvent être complètement différents d'une initialisation à une autre"),
+           
+           p("L'idée du clusplot est de visualiser d'éventuel cluster après l'utilisation d'algorithme de clustering sur les deux première dimension de l'ACP. Dans le clusplot chaque point représente un individu ici un patient. Plus des points sont proches, plus ils sont similaires. Lorsque 2 ellipses se chevauchent cela signifie que les groupes sont plutôt similaires et ne sont pas bien séparés dans cet espace à 2 dimensions. À l'inverse, lorsque 2 clusters sont éloignés cela est un indicateur d'un bon clustering."),
            
            h4("CAH"),
            p("Avant d'appliquer la CAH on va chercher le nombre de groupes idéals qu'on doit utiliser (le k), pour cela on utilise la moyenne de divers indices avec la fonction Nbclust."),
@@ -364,7 +378,9 @@ ui <-
            plotOutput("cah_ire1")%>%
              withSpinner(type =6, color = "#7F00FF"),
            
-           p("Due à la nature non-déterministe de l'ICA les résultats peuvent être complètement différent d'une initialisation à une autre"),
+           p("Dû à la nature non-déterministe de l'ICA, les résultats peuvent être complètement différents d'une initialisation à une autre"),
+           
+           p("L'idée du clusplot est de visualiser d'éventuel cluster après l'utilisation d'algorithme de clustering sur les deux première dimension de l'ACP. Dans le clusplot chaque point représente un individu ici un patient. Plus des points sont proches, plus ils sont similaires. Lorsque 2 ellipses se chevauchent cela signifie que les groupes sont plutôt similaires et ne sont pas bien séparés dans cet espace à 2 dimensions. À l'inverse, lorsque 2 clusters sont éloignés cela est un indicateur d'un bon clustering."),
            
            p("",strong("En conclusion : "),"On ne voit pas de groupe se former à l'issue de notre déconvolution, mais l'on voit que les variables down régulés sont liés entre elle, de même pour les up régulés.")
            
@@ -376,7 +392,7 @@ ui <-
   
   # Tab 4
   tabPanel("CancerSEA",
-           h2("Déconvolution des voies de signalisations issues de CancerSEA au sein de nos échantillons TCGA"),
+           h2("Déconvolution des voies de signalisation issues de CancerSEA au sein de nos échantillons TCGA"),
            
            p("Ici, nous nous intéressons aux signatures des voies de signalisation qu'on retrouve dans Cancer SEA sont : Angiogenèse, Apoptose, Cycle cellulaire, Differentiation, Dégradation de l'ADN, Réparation de l'ADN, l'EMT, l'Hypoxie, l'Inflamation, l'Invasion, la Metastase, la Proliferation, Quiescence, Stemness (La souchitude d'une cellule)"),
            
@@ -417,6 +433,7 @@ ui <-
            
            plotlyOutput("result_ab_SEA_graph")%>%
              withSpinner(type =6, color = "#7F00FF"),
+           p("Ici chaque barre représente un échantillon, un patient, chaque couleur représente une voie de signalisation et la hauteur de la barre représente le score d'abondance d'une pathway (le score d'abondance a pour but de nous donner une idée de l'importance des voies de signalisation chez chaque patient)."),
            
            h2("Etude de l'importance de nos différentes voies de signalisation au sein des échantillons"),
            
@@ -468,7 +485,9 @@ On va tout d'abord procéder à une ACP pour voir le lien entre les différentes
            plotOutput("kmeans_SEA")%>%
              withSpinner(type =6, color = "#7F00FF"),
            
-           p("Due à la nature non-déterministe de l'ICA les résultats peuvent être complètement différent d'une initialisation à une autre"),
+           p("Dû à la nature non-déterministe de l'ICA, les résultats peuvent être complètement différents d'une initialisation à une autre"),
+           
+           p("L'idée du clusplot est de visualiser d'éventuel cluster après l'utilisation d'algorithme de clustering sur les deux première dimension de l'ACP. Dans le clusplot chaque point représente un individu ici un patient. Plus des points sont proches, plus ils sont similaires. Lorsque 2 ellipses se chevauchent cela signifie que les groupes sont plutôt similaires et ne sont pas bien séparés dans cet espace à 2 dimensions. À l'inverse, lorsque 2 clusters sont éloignés cela est un indicateur d'un bon clustering."),
            
            h4("CAH"),
            p("Avant d'appliquer la CAH on va chercher le nombre de groupes idéals qu'on doit utiliser (le k), pour cela, la moyenne de divers indices avec la fonction Nbclust."),
@@ -491,16 +510,14 @@ On va tout d'abord procéder à une ACP pour voir le lien entre les différentes
            plotOutput("cah_SEA")%>%
              withSpinner(type =6, color = "#7F00FF"),
            
-           p("Due à la nature non-déterministe de l'ICA les résultats peuvent être complètement différent d'une initialisation à une autre"),
+           p("Dû à la nature non-déterministe de l'ICA, les résultats peuvent être complètement différents d'une initialisation à une autre"),
            
-           
-  
-           
+           p("L'idée du clusplot est de visualiser d'éventuel cluster après l'utilisation d'algorithme de clustering sur les deux première dimension de l'ACP. Dans le clusplot chaque point représente un individu ici un patient. Plus des points sont proches, plus ils sont similaires. Lorsque 2 ellipses se chevauchent cela signifie que les groupes sont plutôt similaires et ne sont pas bien séparés dans cet espace à 2 dimensions. À l'inverse, lorsque 2 clusters sont éloignés cela est un indicateur d'un bon clustering."),
            
   ),
   tabPanel("Hallmarks",
            
-           h2("Déconvolution des voies de signalisations issues de Hallmarks au sein de nos échantillons TCGA"),
+           h2("Déconvolution des voies de signalisation issues de Hallmarks au sein de nos échantillons TCGA"),
            
            p("Les signatures des voies de signalisation qu'on retrouve dans Hallmarks sont : angiogenesis, cell replicative immortality, change of cellular energetics, escaping immune response, escaping programmed cell death, genome instability and mutations, invasion and metastasis, proliferative signalling, suppression of growth, tumour promoting inflamation"),
            
@@ -589,7 +606,8 @@ On va tout d'abord procéder à une ACP pour voir le lien entre les différentes
            plotOutput("kmeans_Hallmarks")%>%
              withSpinner(type =6, color = "#7F00FF"),
            
-          p("Due à la nature non-déterministe de l'ICA les résultats peuvent être complètement différent d'une initialisation à une autre"),
+          p("Dû à la nature non-déterministe de l'ICA, les résultats peuvent être complètement différents d'une initialisation à une autre"),
+          p("L'idée du clusplot est de visualiser d'éventuel cluster après l'utilisation d'algorithme de clustering sur les deux première dimension de l'ACP. Dans le clusplot chaque point représente un individu ici un patient. Plus des points sont proches, plus ils sont similaires. Lorsque 2 ellipses se chevauchent cela signifie que les groupes sont plutôt similaires et ne sont pas bien séparés dans cet espace à 2 dimensions. À l'inverse, lorsque 2 clusters sont éloignés cela est un indicateur d'un bon clustering."),
            
            h4("CAH"),
           p("Avant d'appliquer la CAH on va chercher le nombre de groupes idéals qu'on doit utiliser (le k), pour cela, la moyenne de divers indices avec la fonction Nbclust."),
@@ -611,7 +629,8 @@ On va tout d'abord procéder à une ACP pour voir le lien entre les différentes
            plotOutput("cah_Hallmarks")%>%
              withSpinner(type =6, color = "#7F00FF"),
            
-           p("",strong("Inteprétation"),"On ne voit pas de groupes se former particulièrement"),
+          p("Dû à la nature non-déterministe de l'ICA, les résultats peuvent être complètement différents d'une initialisation à une autre"),
+          p("L'idée du clusplot est de visualiser d'éventuel cluster après l'utilisation d'algorithme de clustering sur les deux première dimension de l'ACP. Dans le clusplot chaque point représente un individu ici un patient. Plus des points sont proches, plus ils sont similaires. Lorsque 2 ellipses se chevauchent cela signifie que les groupes sont plutôt similaires et ne sont pas bien séparés dans cet espace à 2 dimensions. À l'inverse, lorsque 2 clusters sont éloignés cela est un indicateur d'un bon clustering."),
           
   
            
@@ -624,13 +643,12 @@ On va tout d'abord procéder à une ACP pour voir le lien entre les différentes
            p("Tout d'abord, nous allons voir les effectifs de chaque signature au sein de nos échantillons TCGA."),
            
            titlePanel("Tableau de contingence des occurrences de chaque signature"),
-           uiOutput("contingence_occurence")%>%
-             withSpinner(type =6, color = "#7F00FF"),
+           withLoader(uiOutput("contingence_occurence"),type = "image",loader = "cat.gif"),
+           
            p("",strong("Note : "),"Il y a 173 patients dans notre jeu de donnés"),
            br(),
            titlePanel("Tableau de contingence des scores cumulés de chaque signature"),
-           uiOutput("contingency_scores")%>%
-             withSpinner(type =6, color = "#7F00FF"),
+           withLoader(uiOutput("contingency_scores"),type="image", loader = "math-cat.gif"),
            h3("Distribution des scores lorsqu'IRE1 est actif"),
            p("Ici, nous allons simplement utiliser les scores des signatures XBP1s up et RIDD down, car ce sont des signes qu'IRE1 est activés. Or, nos échantillons sont des patients atteints du Cancer donc on s'attendrait à ce qu'IRE1 soit activé.
 
